@@ -1,4 +1,4 @@
-package com.dartworks.dartworks
+package gitlab.httpanimations.dartworks
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -8,7 +8,7 @@
 PRODUCT_NAME = dartworks
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.dartworks.dartworks
+PRODUCT_BUNDLE_IDENTIFIER = gitlab.httpanimations.dartworks
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.dartworks. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 gitlab.httpanimations. All rights reserved.
