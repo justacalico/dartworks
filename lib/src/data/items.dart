@@ -213,6 +213,14 @@ const Map<String, ItemDef> kItems = {
   ),
 
   // -- Props --------------------------------------------------------------
+  'crate': ItemDef(
+    id: 'crate', name: 'CRATE', category: ItemCategory.prop,
+    color: 0xFF8A6B40, mass: 4.0, sizeX: 0.9, sizeY: 0.9,
+  ),
+  'barrel': ItemDef(
+    id: 'barrel', name: 'BARREL', category: ItemCategory.prop,
+    color: 0xFF5B2BBF, mass: 5.0, sizeX: 0.7, sizeY: 1.0,
+  ),
   'basketball': ItemDef(
     id: 'basketball', name: 'BASKETBALL', category: ItemCategory.prop,
     color: 0xFFC98A3D, mass: 0.6, sizeX: 0.5, sizeY: 0.5,
@@ -244,6 +252,10 @@ const Map<String, ItemDef> kItems = {
   'plank': ItemDef(
     id: 'plank', name: 'PLANK', category: ItemCategory.prop,
     color: 0xFFC98A3D, mass: 1.5, sizeX: 1.2, sizeY: 0.12,
+  ),
+  'bonebox': ItemDef(
+    id: 'bonebox', name: 'BONEBOX', category: ItemCategory.prop,
+    color: 0xFFEDEBF5, mass: 1.6, sizeX: 0.7, sizeY: 0.7,
   ),
   'clipboard': ItemDef(
     id: 'clipboard', name: 'CLIPBOARD', category: ItemCategory.prop,
