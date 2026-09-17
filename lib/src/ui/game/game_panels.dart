@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/notes.dart';
+import '../../game/components/monomat.dart';
 import '../../game/game_events.dart';
 import '../../game/hud_state.dart';
 import '../../theme.dart';
@@ -19,8 +20,17 @@ class MonomatPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final m = hud.openMonomat;
-    if (m == null) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: hud,
+      builder: (context, _) {
+        final m = hud.openMonomat;
+        if (m == null) return const SizedBox.shrink();
+        return _panel(m);
+      },
+    );
+  }
+
+  Widget _panel(MonomatZone m) {
     final rows = monomatRows(m.stock);
     return Align(
       alignment: Alignment.centerRight,

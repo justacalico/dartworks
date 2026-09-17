@@ -26,21 +26,31 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
-  late DartworksGame _game;
+class _GameScreenState extends State<GameScreen>
+    with WidgetsBindingObserver {
+  DartworksGame? _game;
   late KeyboardInputMapper _mapper;
   final _focus = FocusNode();
 
   bool _paused = false;
   bool _dead = false;
+  bool _mouseFire = false;
+  bool _mouseGrab = false;
   NoteInfo? _note;
   LevelResult? _result;
   int _generation = 0;
 
   bool get _touchMode =>
-      !kIsWeb &&
-      (defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS);
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+
+  DartworksGame get game => _game!;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void didChangeDependencies() {
@@ -48,8 +58,17 @@ class _GameScreenState extends State<GameScreen> {
     if (_generation == 0) _buildGame();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      _game?.input.clearEdges();
+      _mapper.clear();
+    }
+  }
+
   void _buildGame() {
-    final data = levelDataFor(widget.levelId)!;
+    final data = levelDataFor(widget.levelId);
+    if (data == null) return;
     _game = DartworksGame(
       level: data,
       store: AppScope.progressOf(context),
@@ -60,7 +79,14 @@ class _GameScreenState extends State<GameScreen> {
         onUnlock: (_) {},
       ),
     );
-    _mapper = KeyboardInputMapper(_game.input);
+    _mapper = KeyboardInputMapper(game.input);
+  }
+
+  void _togglePause() {
+    setState(() {
+      _paused = !_paused;
+      _game?.paused = _paused;
+    });
   }
 
   void _retry() {
@@ -78,27 +104,24 @@ class _GameScreenState extends State<GameScreen> {
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     _mapper.handleKey(event);
-    if (_game.input.pauseEdge) {
-      _game.input.pauseEdge = false;
-      setState(() {
-        _paused = !_paused;
-        _game.paused = _paused;
-      });
+    if (_game?.input.pauseEdge ?? false) {
+      game.input.pauseEdge = false;
+      _togglePause();
     }
     return KeyEventResult.handled;
   }
 
   /// Mouse position -> world aim direction.
   void _aimFromPointer(Offset local, Size size) {
-    if (!_game.isLoaded) return;
-    final vf = _game.camera.viewfinder;
-    final ppu = _game.metersToPixels * vf.zoom;
+    if (_game == null || !game.isLoaded) return;
+    final vf = game.camera.viewfinder;
+    final ppu = game.metersToPixels * vf.zoom;
     final worldMouse = vf.position +
         Vector2(
           (local.dx - size.width / 2) / ppu,
           (local.dy - size.height / 2) / ppu,
         );
-    final p = _game.player.body.position;
+    final p = game.player.body.position;
     final dir = worldMouse - p;
     if (dir.length2 > 0.01) {
       _mapper.setAim(dir.x, dir.y);
@@ -107,6 +130,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _focus.dispose();
     super.dispose();
   }
@@ -140,29 +164,45 @@ class _GameScreenState extends State<GameScreen> {
                       ? _aimFromPointer(e.localPosition, size)
                       : null,
               onPointerDown: (e) {
-                if (e.kind != PointerDeviceKind.mouse) return;
+                if (e.kind != PointerDeviceKind.mouse || _game == null) {
+                  return;
+                }
                 if (e.buttons & kPrimaryMouseButton != 0) {
+                  _mouseFire = true;
                   _mapper.setFire(true);
                 }
                 if (e.buttons & kSecondaryMouseButton != 0) {
-                  _game.input.grab = true;
+                  _mouseGrab = true;
+                  game.input.grab = true;
                 }
               },
               onPointerUp: (e) {
-                if (e.kind == PointerDeviceKind.mouse) {
+                if (e.kind != PointerDeviceKind.mouse || _game == null) {
+                  return;
+                }
+                if (_mouseFire) {
+                  _mouseFire = false;
                   _mapper.setFire(false);
-                  _game.input.grab = false;
+                }
+                if (_mouseGrab) {
+                  _mouseGrab = false;
+                  game.input.grab = false;
                 }
               },
               child: Stack(
                 children: [
-                  GameWidget(key: ValueKey(_generation), game: _game),
-                  HudOverlay(hud: _game.hud),
-                  if (_touchMode) TouchControls(input: _game.input),
-                  MonomatPanel(
-                    hud: _game.hud,
-                    onBuy: _game.buyFromMonomat,
-                  ),
+                  if (_game != null)
+                    GameWidget(key: ValueKey(_generation), game: game),
+                  if (_game != null) ...[
+                    HudOverlay(hud: game.hud),
+                    if (_touchMode)
+                      TouchControls(
+                          input: game.input, onPause: _togglePause),
+                    MonomatPanel(
+                      hud: game.hud,
+                      onBuy: game.buyFromMonomat,
+                    ),
+                  ],
                   if (_note != null)
                     NotePopup(
                       note: _note!,
@@ -172,7 +212,7 @@ class _GameScreenState extends State<GameScreen> {
                     PauseMenu(
                       onResume: () => setState(() {
                         _paused = false;
-                        _game.paused = false;
+                        _game?.paused = false;
                       }),
                       onQuit: _quit,
                     ),

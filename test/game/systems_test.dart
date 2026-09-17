@@ -31,18 +31,18 @@ void main() {
 
     test('stores into free slots then replaces active', () {
       final inv = Inventory();
-      expect(inv.store(gun), isTrue);
+      expect(inv.store(gun), 0);
       expect(inv.slots[0]?.item, gun);
-      expect(inv.store(melee), isTrue);
+      expect(inv.store(melee), 1);
       expect(inv.slots[1]?.item, melee);
-      expect(inv.store(kItems['baton']!), isTrue);
+      expect(inv.store(kItems['baton']!), 0);
       expect(inv.active?.item.id, 'baton');
     });
 
     test('quest items cannot be stored', () {
       final inv = Inventory();
-      expect(inv.store(kItems['keycard']!), isFalse);
-      expect(inv.store(kItems['module']!), isFalse);
+      expect(inv.store(kItems['keycard']!), isNull);
+      expect(inv.store(kItems['module']!), isNull);
     });
 
     test('slot selection clamps to range', () {

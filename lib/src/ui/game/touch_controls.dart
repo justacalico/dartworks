@@ -6,9 +6,10 @@ import '../../theme.dart';
 /// Mobile control scheme: left stick moves, right side aims + fires,
 /// edge buttons for jump / grab / slow-mo / interact / pause.
 class TouchControls extends StatelessWidget {
-  const TouchControls({super.key, required this.input});
+  const TouchControls({super.key, required this.input, this.onPause});
 
   final InputState input;
+  final VoidCallback? onPause;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,7 @@ class TouchControls extends StatelessWidget {
                 const Spacer(),
                 _TapButton(
                   label: 'II',
-                  onTap: () => input.pauseEdge = true,
+                  onTap: () => onPause?.call(),
                 ),
               ],
             ),
@@ -163,8 +164,8 @@ class _AimStickState extends State<_AimStick> {
     if (nx * nx + ny * ny > 0.05) {
       widget.input.aimX = nx;
       widget.input.aimY = ny;
-      widget.input.fire = delta.distance > max * 0.55;
     }
+    widget.input.fire = delta.distance > max * 0.55;
   }
 
   @override

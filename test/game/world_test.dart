@@ -180,6 +180,62 @@ void main() {
     );
 
     testWithGame<DartworksGame>(
+      'quest props survive floor contact, collect on player touch',
+      () => DartworksGame(
+        level: _mini(
+          [
+            '##########',
+            '#P.....1.#',
+            '##########',
+          ],
+          legend: {'1': 'module:museum_basement'},
+        ),
+        store: FakeProgressStore(),
+        events: const GameEvents(),
+      ),
+      (game) async {
+        await step(game, 90);
+        // settled on the floor without self-collecting
+        expect(game.world.children.whereType<PhysicsProp>().length, 1);
+        final store = game.store as FakeProgressStore;
+        expect(store.isLevelUnlocked('museum_basement'), isFalse);
+        // walk into it
+        game.input.moveAxis = 1;
+        await step(game, 240);
+        expect(store.isLevelUnlocked('museum_basement'), isTrue);
+      },
+    );
+
+    testWithGame<DartworksGame>(
+      'grabbing a gun prop holsters it into a slot',
+      () => DartworksGame(
+        level: _mini(
+          [
+            '##########',
+            '#P1......#',
+            '##########',
+          ],
+          legend: {'1': 'p350'},
+        ),
+        store: FakeProgressStore(),
+        events: const GameEvents(),
+      ),
+      (game) async {
+        await step(game, 60);
+        game.input.aimX = 1;
+        game.input.aimY = 0;
+        // tap grab
+        for (var i = 0; i < 30; i++) {
+          game.input.grab = i < 10;
+          game.update(1 / 60);
+          await Future<void>(() {});
+        }
+        game.input.grab = false;
+        expect(game.player.inventory.active?.item.id, 'p350');
+      },
+    );
+
+    testWithGame<DartworksGame>(
       'legend items and boneboxes spawn props',
       () => DartworksGame(
         level: _mini(
