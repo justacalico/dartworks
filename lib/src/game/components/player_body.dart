@@ -84,7 +84,7 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
 
   /// Where the hand holds things — ahead of the chest, toward the aim.
   Vector2 get handPos =>
-      body.position + aimDir * 1.15 + Vector2(0, -0.25);
+      body.position + aimDir * 1.35 + Vector2(0, -0.25);
 
   void damage(double amount, {Vector2? from}) {
     if (isDead) return;
@@ -163,7 +163,7 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
     _fireCooldown -= dt;
     if (_swingTimer > 0) {
       _swingTimer -= dt;
-      if (_swingTimer <= 0) equippedProp?.swinging = false;
+      if (_swingTimer <= 0) equippedProp?.stopSwing();
     }
     if (input.jumpEdge) _jumpBuffer = 0.13;
   }
@@ -230,7 +230,7 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
       onFire?.call(handPos, aimDir, slot);
       _fireCooldown = 1 / item.fireRate;
     } else if (item.isMelee && equippedProp != null) {
-      equippedProp!.swinging = true;
+      equippedProp!.startSwing();
       _swingTimer = 0.3;
       equippedProp!.body.angularVelocity = 18 * facing;
       _fireCooldown = 1 / item.fireRate;
@@ -253,7 +253,7 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
   /// Called by the game after it spawns/removes [equippedProp].
   void driveWeapon() {
     final prop = equippedProp;
-    if (prop == null || !prop.isMounted) return;
+    if (prop == null || !prop.isMounted || !prop.isLoaded) return;
     if (!prop.held) prop.equip();
     prop.anchor = handPos;
     prop.aimAngle = math.atan2(aimDir.y, aimDir.x);
@@ -272,7 +272,7 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
 
   @override
   void endContact(Object other, Contact contact) {
-    _ground.remove(other);
+    if (!contact.isSensorEvent) _ground.remove(other);
   }
 
   @override

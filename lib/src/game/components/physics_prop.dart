@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 
@@ -53,8 +55,33 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
   /// Set while this prop is the equipped weapon — it tracks the hand.
   bool held = false;
 
-  /// Melee swing window — contacts during it deal damage.
-  bool swinging = false;
+  /// Enemies currently touching the prop, for melee swings.
+  final _touchingEnemies = <EnemyBody>{};
+  final _swungThisSwing = <EnemyBody>{};
+  bool _swinging = false;
+  bool get swinging => _swinging;
+
+  /// Velocity snapshot from the previous tick. Contact events arrive
+  /// post-solve, when the solver has already absorbed the impact, so
+  /// [beginContact] reads this instead of the live velocity.
+  final _preVel = Vector2.zero();
+
+  /// Begin a melee swing: hits anything already touching plus new
+  /// contacts until [stopSwing].
+  void startSwing() {
+    _swinging = true;
+    _swungThisSwing.clear();
+    for (final e in _touchingEnemies) {
+      if (!e.dead && _swungThisSwing.add(e)) {
+        e.damage(item.damage, from: body.position);
+      }
+    }
+  }
+
+  void stopSwing() {
+    _swinging = false;
+    _swungThisSwing.clear();
+  }
 
   /// World-space point the prop is steered toward while held/grabbed.
   Vector2? anchor;
@@ -113,7 +140,8 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
 
   void unequip() {
     held = false;
-    swinging = false;
+    stopSwing();
+    _touchingEnemies.clear();
     body.fixedRotation = true;
     _retarget(DwBits.prop);
   }
@@ -143,12 +171,12 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
   void update(double dt) {
     super.update(dt);
     if (!isLoaded) return;
+    _preVel.setFrom(body.linearVelocity);
     if (!((grabbed || held) && anchor != null)) return;
     final to = anchor! - body.position;
-    final force = to * (held ? 90 : 55) * body.mass -
-        body.linearVelocity * (held ? 10 : 6) * body.mass;
-    body.applyForce(force);
     if (held) {
+      // Equipped weapons track the hand rigidly.
+      body.linearVelocity = to / math.max(dt, 1e-4);
       var diff = aimAngle - body.rotation.angle;
       while (diff > 3.14159) {
         diff -= 6.28318;
@@ -157,21 +185,26 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
         diff += 6.28318;
       }
       body.angularVelocity = diff * 12 - body.angularVelocity * 0.3;
+      return;
     }
+    final force = to * 55 * body.mass - body.linearVelocity * 6 * body.mass;
+    body.applyForce(force);
   }
 
   @override
   void beginContact(Object other, Contact contact) {
     super.beginContact(other, contact);
-    if (swinging && other is EnemyBody && !other.dead) {
-      other.damage(item.damage, from: body.position);
+    if (other is EnemyBody && !other.dead) {
+      _touchingEnemies.add(other);
+      if (_swinging && _swungThisSwing.add(other)) {
+        other.damage(item.damage, from: body.position);
+      }
     }
-    if (!contact.isSensorEvent && !swinging && !held) {
-      final rel = (body.linearVelocity -
-              (other is BodyComponent
-                  ? other.body.linearVelocity
-                  : Vector2.zero()))
-          .length;
+    if (!contact.isSensorEvent && !_swinging && !held) {
+      var rel = _preVel.length;
+      if (other is BodyComponent) {
+        rel = (_preVel - other.body.linearVelocity).length;
+      }
       if (rel > 4) {
         onImpactDamage?.call(this, other, rel);
         if (isBreakable) damage(rel * 1.6);
@@ -180,6 +213,12 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
     if (isCollectibleQuest && other is PlayerBody) {
       onCollect?.call(this);
     }
+  }
+
+  @override
+  void endContact(Object other, Contact contact) {
+    super.endContact(other, contact);
+    if (other is EnemyBody) _touchingEnemies.remove(other);
   }
 
   @override

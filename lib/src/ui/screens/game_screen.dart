@@ -2,6 +2,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../app_scope.dart';
 import '../../data/catalog.dart';
@@ -30,7 +31,6 @@ class _GameScreenState extends State<GameScreen>
     with WidgetsBindingObserver {
   DartworksGame? _game;
   late KeyboardInputMapper _mapper;
-  final _focus = FocusNode();
 
   bool _paused = false;
   bool _dead = false;
@@ -50,6 +50,7 @@ class _GameScreenState extends State<GameScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    HardwareKeyboard.instance.addHandler(_onKey);
   }
 
   @override
@@ -102,13 +103,16 @@ class _GameScreenState extends State<GameScreen>
 
   void _quit() => Navigator.of(context).pop();
 
-  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+  /// Hardware-level key hook: GameWidget swallows focused key events, so
+  /// the mapper listens here instead of on a Focus widget.
+  bool _onKey(KeyEvent event) {
+    if (_game == null) return false;
     _mapper.handleKey(event);
-    if (_game?.input.pauseEdge ?? false) {
+    if (game.input.pauseEdge) {
       game.input.pauseEdge = false;
       _togglePause();
     }
-    return KeyEventResult.handled;
+    return false;
   }
 
   /// Mouse position -> world aim direction.
@@ -130,8 +134,8 @@ class _GameScreenState extends State<GameScreen>
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
     WidgetsBinding.instance.removeObserver(this);
-    _focus.dispose();
     super.dispose();
   }
 
@@ -150,14 +154,10 @@ class _GameScreenState extends State<GameScreen>
 
     return Scaffold(
       backgroundColor: DwColors.voidBlack,
-      body: Focus(
-        focusNode: _focus,
-        autofocus: true,
-        onKeyEvent: _onKey,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final size =
-                Size(constraints.maxWidth, constraints.maxHeight);
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final size =
+              Size(constraints.maxWidth, constraints.maxHeight);
             return Listener(
               onPointerHover: (e) =>
                   e.kind == PointerDeviceKind.mouse
@@ -237,8 +237,7 @@ class _GameScreenState extends State<GameScreen>
                 ],
               ),
             );
-          },
-        ),
+        },
       ),
     );
   }

@@ -235,12 +235,15 @@ class DartworksGame extends Forge2DGame {
       final prop = PhysicsProp(item: item, spawn: p.handPos);
       _props.add(prop);
       p.equippedProp = prop;
-      _add(prop);
+      // Defer the add: BodyComponent.onLoad resolves the game in an
+      // async continuation, which can race with updateTree.
+      unawaited(Future(() => _add(prop)));
     }
   }
 
   /// `world.add` returns FutureOr — fire and forget for sync callers.
   void _add(Component component) {
+    if (!world.physicsWorld.isValid) return;
     final result = world.add(component);
     if (result is Future<void>) unawaited(result);
   }
@@ -261,12 +264,7 @@ class DartworksGame extends Forge2DGame {
   void _collectQuest(PhysicsProp prop) {
     if (prop.isRemoving) return;
     if (prop.noteId != null) {
-      final note = kNotes.where((n) => n.id == prop.noteId).firstOrNull;
-      if (note == null) {
-        _props.remove(prop);
-        prop.removeFromParent();
-        return;
-      }
+      final note = kNotes.firstWhere((n) => n.id == prop.noteId);
       _notesFound++;
       store.addNote(note.id);
       events.onNote?.call(note);
@@ -453,6 +451,7 @@ class DartworksGame extends Forge2DGame {
     final index = inv.store(prop.item);
     if (index == null) return false;
     inv.select(index);
+    _slotChanged(index, prop.item);
     _props.remove(prop);
     prop.removeFromParent();
     _toast('${prop.item.name} HOLSTERED');
@@ -483,10 +482,6 @@ class DartworksGame extends Forge2DGame {
 
     // Slow-time: physics and components run on the scaled clock.
     final p = player;
-    if (!p.isLoaded) {
-      super.update(dt);
-      return;
-    }
     if (input.slowmoEdge) _slowmoToggled = !_slowmoToggled;
     final wantSlow =
         (input.slowmo || _slowmoToggled) && p.slowCharge > 0;
@@ -546,13 +541,9 @@ class DartworksGame extends Forge2DGame {
         var i = 0;
         for (final id in spawn) {
           final cell = a.map.waveSpawns[i % a.map.waveSpawns.length];
-          final def = kEnemies[id];
-          if (def == null) {
-            waves.enemyDown();
-            continue;
-          }
           final e = EnemyBody(
-              def: def, spawn: feetAt(cell, def.sizeY / 2))
+              def: kEnemies[id]!,
+              spawn: feetAt(cell, kEnemies[id]!.sizeY / 2))
             ..player = p;
           _wireEnemy(e);
           _waveEnemies.add(e);

@@ -213,7 +213,7 @@ class EnemyBody extends BodyComponent with ContactCallbacks {
   @override
   void endContact(Object other, Contact contact) {
     super.endContact(other, contact);
-    _grounded.remove(other);
+    if (!contact.isSensorEvent) _grounded.remove(other);
   }
 
   @override

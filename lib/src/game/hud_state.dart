@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../data/items.dart';
 import 'components/monomat.dart';
@@ -27,7 +28,7 @@ class HudState extends ChangeNotifier {
   set openMonomat(MonomatZone? v) {
     if (v == _openMonomat) return;
     _openMonomat = v;
-    notifyListeners();
+    _safeNotify();
   }
 
   String? _toast;
@@ -37,13 +38,13 @@ class HudState extends ChangeNotifier {
   void showToast(String message, {double seconds = 2.6}) {
     _toast = message;
     _toastTtl = seconds;
-    notifyListeners();
+    _safeNotify();
   }
 
   void tick(double dt) {
     if (_toastTtl > 0) {
       _toastTtl -= dt;
-      if (_toastTtl <= 0) notifyListeners();
+      if (_toastTtl <= 0) _safeNotify();
     }
   }
 
@@ -51,10 +52,29 @@ class HudState extends ChangeNotifier {
     if (text == objective && done == objectiveDone) return;
     objective = text;
     objectiveDone = done;
-    notifyListeners();
+    _safeNotify();
   }
 
-  void refresh() => notifyListeners();
+  void refresh() => _safeNotify();
+
+  /// GameWidget can drive update() from inside its own LayoutBuilder, so a
+  /// plain notifyListeners() can land mid-build and trip markNeedsBuild.
+  void _safeNotify() {
+    SchedulerBinding? binding;
+    try {
+      binding = SchedulerBinding.instance;
+    } catch (_) {}
+    final phase = binding?.schedulerPhase;
+    if (binding == null ||
+        phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.transientCallbacks) {
+      notifyListeners();
+      return;
+    }
+    binding.addPostFrameCallback((_) {
+      if (hasListeners) notifyListeners();
+    });
+  }
 }
 
 /// One row in the monomat popup.
