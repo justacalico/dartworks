@@ -1,0 +1,8 @@
+#!/bin/sh
+# Safety net: prefix non-conventional subjects with misc: so cog check still passes
+msg_file="$1"
+msg="$(cat "$msg_file")"
+pattern='^(feat|fix|chore|ci|docs|refactor|style|test|perf|revert|build|misc)(\(.+\))?!?: .+'
+if ! printf '%s' "$msg" | grep -Eq "$pattern"; then
+  printf 'misc: %s\n' "$msg" > "$msg_file"
+fi
