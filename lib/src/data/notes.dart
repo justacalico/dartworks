@@ -63,6 +63,16 @@ const List<NoteInfo> kNotes = [
         'inventory permanently. The bins run forever, or until the nullmen '
         'decide they have feelings. Whichever comes first.',
   ),
+  NoteInfo(
+    id: 'museum_3',
+    levelId: 'museum',
+    title: 'STAFF ONLY',
+    author: 'ARCHIVAL STAFF',
+    body:
+        'The panel on the second floor is not a load-bearing wall. It is '
+        'not a wall at all, technically. Stop asking what is behind it. '
+        'What is behind it is behind it.',
+  ),
 
   // -- Streets ------------------------------------------------------------
   NoteInfo(
@@ -117,6 +127,16 @@ const List<NoteInfo> kNotes = [
         'anyone, Ford. They sweep, they sterilise, and you are on the '
         'list. Keep moving.',
   ),
+  NoteInfo(
+    id: 'runoff_3',
+    levelId: 'runoff',
+    title: 'DRAIN INCIDENT 12',
+    author: 'CIVIC MAINTENANCE',
+    body:
+        'Worker reports "a sick coworker" shambling in the lower channel. '
+        'Description matches employee Arthur Ford. Ford is accounted for '
+        'at his desk. Ticket closed as a prank. Do not investigate.',
+  ),
 
   // -- Sewers -------------------------------------------------------------
   NoteInfo(
@@ -163,6 +183,16 @@ const List<NoteInfo> kNotes = [
         'DAVE: why would I shoot a window\n'
         'PETRA: to see if it is a window, dave',
   ),
+  NoteInfo(
+    id: 'warehouse_3',
+    levelId: 'warehouse',
+    title: 'CRABLET MEMO',
+    author: 'SHIFT LEAD',
+    body:
+        'The nest in 4B is past "report before they nest" territory. The '
+        'big one threw a forklift at me. I am logging this from inside a '
+        'shipping container. Send help or send a forklift back.',
+  ),
 
   // -- Central Station ----------------------------------------------------
   NoteInfo(
@@ -184,6 +214,16 @@ const List<NoteInfo> kNotes = [
         'I know what you are doing, Ford. Immortality via void lattice. '
         'For the record I had the idea first. Keep the gateway open and '
         'I never saw you. Deal?',
+  ),
+  NoteInfo(
+    id: 'central_3',
+    levelId: 'central_station',
+    title: 'TURRET CALIBRATION',
+    author: 'TRANSIT AUTHORITY',
+    body:
+        'Platform turrets now default to LETHAL on unrecognised targets. '
+        'Employees should carry badges visibly. If flagged anyway, '
+        'apologise to the turret and move briskly out of its arc.',
   ),
 
   // -- Tower --------------------------------------------------------------
@@ -296,6 +336,16 @@ const List<NoteInfo> kNotes = [
         'They figured it out anyway. See you in the void. Try to leave '
         'the gateway intact.',
   ),
+  NoteInfo(
+    id: 'throne_3',
+    levelId: 'throne_room',
+    title: 'CHAMBER 02 MANIFEST',
+    author: 'UNKNOWN',
+    body:
+        'One (1) panic room. One (1) security director, real-world issue. '
+        'One (1) executive with a void for a face. Contents may settle '
+        'during transit. This is not a warning. This is a record.',
+  ),
 
   // -- Sandbox chain ------------------------------------------------------
   NoteInfo(
@@ -309,6 +359,16 @@ const List<NoteInfo> kNotes = [
         'are not.',
   ),
   NoteInfo(
+    id: 'basement_2',
+    levelId: 'museum_basement',
+    title: 'PLAYROOM RULES',
+    author: 'MUSEUM STAFF',
+    body:
+        'Red floor means playroom. Gym shapes go back on the rack when '
+        'you are done. The test nullbody is allowed to stay mad. We '
+        'earned it.',
+  ),
+  NoteInfo(
     id: 'redacted_1',
     levelId: 'redacted_chamber',
     title: '[REDACTED]',
@@ -317,6 +377,26 @@ const List<NoteInfo> kNotes = [
         'This chamber was cut for lacking "natural cohesion". The targets '
         'still want to be knocked down. The bulkhead still wants a '
         'battery. Some things survive the cut.',
+  ),
+  NoteInfo(
+    id: 'redacted_2',
+    levelId: 'redacted_chamber',
+    title: 'TARGET PROTOCOL',
+    author: 'RANGE OFFICER',
+    body:
+        'The three desk targets trip their lights when downed, but only '
+        'the bulkhead cares if all three stay down AT ONCE. Weigh one '
+        'down, stand on one, shoot one. You know the drill.',
+  ),
+  NoteInfo(
+    id: 'redacted_3',
+    levelId: 'redacted_chamber',
+    title: 'RAIL SCHEDULE',
+    author: 'CIVIC MAINTENANCE',
+    body:
+        'The ceiling crate ferries the battery between platforms on a '
+        'valve pull. Knock the crate loose, take the battery, mind the '
+        'crablets that nested in the corridor since the cut.',
   ),
   NoteInfo(
     id: 'range_1',
@@ -329,6 +409,16 @@ const List<NoteInfo> kNotes = [
         'targets home. They are reclaimed. You know the rules.',
   ),
   NoteInfo(
+    id: 'range_2',
+    levelId: 'handgun_range',
+    title: 'COURSE RECORD',
+    author: 'RANGE OFFICER',
+    body:
+        'Fastest clean run of the eight-target course: one of the Fords, '
+        'who cheated by being in three places at once. Disqualified. '
+        'Record stands at "good enough". The box at the end is yours.',
+  ),
+  NoteInfo(
     id: 'tuscany_1',
     levelId: 'tuscany',
     title: 'FIELD TRIP',
@@ -337,6 +427,26 @@ const List<NoteInfo> kNotes = [
         'Someone ported a villa from the old devkit demos into the sim. '
         'Nobody claimed it. The wine is not real but the sunset almost '
         'is.',
+  ),
+  NoteInfo(
+    id: 'tuscany_2',
+    levelId: 'tuscany',
+    title: 'GARDEN DUTY',
+    author: 'GROUNDSKEEPER',
+    body:
+        'Terraces get watered, cellar stays locked, and if the melons '
+        'start rolling downhill on their own, that is between them and '
+        'the void. I do not get paid enough for sentient fruit.',
+  ),
+  NoteInfo(
+    id: 'tuscany_3',
+    levelId: 'tuscany',
+    title: 'POSTCARD',
+    author: 'A WANDERER',
+    body:
+        'wish you were here. the light through the pergola does something '
+        'the renderer should not be able to do. staying one more cycle. '
+        'do not tell monogon the gate is still warm',
   ),
   NoteInfo(
     id: 'zombiewarehouse_1',
@@ -349,6 +459,16 @@ const List<NoteInfo> kNotes = [
         'anyone reads this: the boards were my idea. Tell my wife.',
   ),
   NoteInfo(
+    id: 'zombiewarehouse_2',
+    levelId: 'zombie_warehouse',
+    title: 'ROUND LOG',
+    author: 'LAST SURVIVOR',
+    body:
+        'Round 4 broke us. The throwers aimed for the boards, not us. '
+        'They are learning. The big one in round 5 is worse. Board high, '
+        'shoot first, keep the Monomat fed.',
+  ),
+  NoteInfo(
     id: 'blankbox_1',
     levelId: 'blankbox',
     title: 'EDGE CASES',
@@ -357,6 +477,26 @@ const List<NoteInfo> kNotes = [
         'This room exists for the things that broke every other room. '
         'If it compiles in here, it compiles anywhere. Please stop '
         'reporting the walls as a bug. The walls are the point.',
+  ),
+  NoteInfo(
+    id: 'fantasyarena_1',
+    levelId: 'fantasy_arena',
+    title: 'PIT LEDGER',
+    author: 'COURT SCRIBE',
+    body:
+        'The new king reopened the pit. Same rules, better seating. '
+        'Fords fight, Fords cheer, one Ford somewhere is probably '
+        'keeping score. The void above is very pretty tonight.',
+  ),
+  NoteInfo(
+    id: 'fantasyarena_2',
+    levelId: 'fantasy_arena',
+    title: 'scratched under a seat',
+    author: 'A FORD',
+    body:
+        'four rounds. that is the magic number. survive four and the '
+        'pit lets you leave, nobody knows why. it is the arena now. '
+        'the arena is the law',
   ),
 
   // -- Meta ---------------------------------------------------------------
