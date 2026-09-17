@@ -30,20 +30,26 @@ variables:
   before_script:
     - apk add --no-cache bash curl jq git github-cli openssh-client
 
+# The web build happens on GitHub with the other targets; this job only
+# downloads the finished "web" artifact and publishes it to GitLab Pages.
 pages:
-  stage: build
-  image: ghcr.io/cirruslabs/flutter:stable
+  stage: release
+  image: alpine:3.19
+  needs: [github-sync]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   variables:
-    GIT_DEPTH: "1"
+    GH_TOKEN: $GH_TOKEN
+  before_script:
+    - apk add --no-cache bash github-cli
   script:
-    # Pages unique domains serve the site at /, not /$CI_PROJECT_NAME/.
-    - flutter build web --release --base-href "/"
-    - mv build/web public
+    - RUN_ID=$(bash scripts/watch-github-run.sh find --sha "$CI_COMMIT_SHA" --event push --branch main)
+    - mkdir -p public
+    - gh run download "$RUN_ID" -R justacalico/dartworks -n web -D /tmp/web
+    - tar -xzf /tmp/web/dartworks-web.tar.gz -C public
   artifacts:
     paths:
       - public
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 test:
   stage: build

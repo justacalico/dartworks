@@ -68,7 +68,7 @@ jobs:
             BUILD_ALL="true"
           fi
           if [ "$BUILD_ALL" = "true" ]; then
-            TARGETS='[{"target":"android","os":"ubuntu-latest"},{"target":"linux","os":"ubuntu-latest"},{"target":"linux-arm64","os":"ubuntu-24.04-arm","flutter":"git"},{"target":"windows","os":"windows-latest"},{"target":"windows-arm64","os":"windows-11-arm","flutter":"git"},{"target":"macos","os":"macos-latest","flutter_arch":"arm64"},{"target":"ios","os":"macos-latest","flutter_arch":"arm64"}]'
+            TARGETS='[{"target":"android","os":"ubuntu-latest"},{"target":"web","os":"ubuntu-latest"},{"target":"linux","os":"ubuntu-latest"},{"target":"linux-arm64","os":"ubuntu-24.04-arm","flutter":"git"},{"target":"windows","os":"windows-latest"},{"target":"windows-arm64","os":"windows-11-arm","flutter":"git"},{"target":"macos","os":"macos-latest","flutter_arch":"arm64"},{"target":"ios","os":"macos-latest","flutter_arch":"arm64"}]'
           else
             TARGETS='[{"target":"android","os":"ubuntu-latest"}]'
           fi
@@ -250,6 +250,18 @@ jobs:
             cp build/app/outputs/flutter-apk/app-debug.apk "$ARTIFACTS_DIR/dartworks-android.apk"
             cp build/app/outputs/bundle/debug/app-debug.aab "$ARTIFACTS_DIR/dartworks-android.aab"
           fi
+
+      - name: Build web package
+        if: matrix.target == 'web'
+        run: |
+          set -euo pipefail
+          ARTIFACTS_DIR="$GITHUB_WORKSPACE/artifacts"
+          mkdir -p "$ARTIFACTS_DIR"
+          flutter config --no-analytics >/dev/null
+          flutter pub get
+          # Pages unique domains serve the site at /, not /$CI_PROJECT_NAME/.
+          flutter build web --release --base-href "/"
+          tar -czf "$ARTIFACTS_DIR/dartworks-web.tar.gz" -C build/web .
 
       - name: Build Linux desktop packages
         if: startsWith(matrix.target, 'linux')
@@ -508,6 +520,7 @@ jobs:
 
             ### Artifacts
             - Android (signed apk + aab)
+            - Web (tar.gz, also deployed to GitLab Pages)
             - Linux desktop (x86_64 + arm64: tar.gz, zip, deb, rpm)
             - Windows (x86_64 + arm64: zip)
             - macOS (arm64: zip, dmg)
