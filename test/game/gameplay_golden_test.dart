@@ -1,4 +1,3 @@
-import 'package:dartworks/src/data/level_data.dart';
 import 'package:dartworks/src/data/levels/levels.dart';
 import 'package:dartworks/src/game/dartworks_game.dart';
 import 'package:dartworks/src/game/game_events.dart';

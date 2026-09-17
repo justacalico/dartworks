@@ -9,9 +9,10 @@ LevelData miniLevel(
   List<MonomatOffer> stock = const [],
   List<WaveSpec> waves = const [],
   double darkness = 0,
+  String id = 'test_mini',
 }) =>
     LevelData(
-      id: 'test_mini',
+      id: id,
       layout: layout,
       palette: LevelPalette(
           bgTop: 0xFF000000,

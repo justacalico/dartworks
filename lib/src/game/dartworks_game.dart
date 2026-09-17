@@ -235,12 +235,15 @@ class DartworksGame extends Forge2DGame {
       final prop = PhysicsProp(item: item, spawn: p.handPos);
       _props.add(prop);
       p.equippedProp = prop;
-      _add(prop);
+      // Defer the add: BodyComponent.onLoad resolves the game in an
+      // async continuation, which can race with updateTree.
+      unawaited(Future(() => _add(prop)));
     }
   }
 
   /// `world.add` returns FutureOr — fire and forget for sync callers.
   void _add(Component component) {
+    if (!world.physicsWorld.isValid) return;
     final result = world.add(component);
     if (result is Future<void>) unawaited(result);
   }
@@ -453,6 +456,7 @@ class DartworksGame extends Forge2DGame {
     final index = inv.store(prop.item);
     if (index == null) return false;
     inv.select(index);
+    _slotChanged(index, prop.item);
     _props.remove(prop);
     prop.removeFromParent();
     _toast('${prop.item.name} HOLSTERED');

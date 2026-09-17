@@ -181,7 +181,7 @@ Future<AssembledLevel> assembleLevel({
     final m =
         MonomatZone(center: cellCenter(cell), stock: MonomatStock(level.monomatStock));
     result.monomats.add(m);
-    await world.add(m);
+    await zone(m);
   }
   for (final cell in map.elevators) {
     await world
