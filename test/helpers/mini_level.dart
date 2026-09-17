@@ -11,6 +11,7 @@ LevelData miniLevel(
   List<WaveSpec> waves = const [],
   double darkness = 0,
   String id = 'test_mini',
+  int ammo = 0,
 }) =>
     LevelData(
       id: id,
@@ -28,4 +29,5 @@ LevelData miniLevel(
       boneboxDrops: boneboxDrops,
       monomatStock: stock,
       waves: waves,
+      ammoStart: ammo,
     );

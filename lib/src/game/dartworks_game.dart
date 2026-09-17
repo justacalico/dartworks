@@ -264,12 +264,7 @@ class DartworksGame extends Forge2DGame {
   void _collectQuest(PhysicsProp prop) {
     if (prop.isRemoving) return;
     if (prop.noteId != null) {
-      final note = kNotes.where((n) => n.id == prop.noteId).firstOrNull;
-      if (note == null) {
-        _props.remove(prop);
-        prop.removeFromParent();
-        return;
-      }
+      final note = kNotes.firstWhere((n) => n.id == prop.noteId);
       _notesFound++;
       store.addNote(note.id);
       events.onNote?.call(note);
@@ -487,10 +482,6 @@ class DartworksGame extends Forge2DGame {
 
     // Slow-time: physics and components run on the scaled clock.
     final p = player;
-    if (!p.isLoaded) {
-      super.update(dt);
-      return;
-    }
     if (input.slowmoEdge) _slowmoToggled = !_slowmoToggled;
     final wantSlow =
         (input.slowmo || _slowmoToggled) && p.slowCharge > 0;

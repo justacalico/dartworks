@@ -201,11 +201,10 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
       }
     }
     if (!contact.isSensorEvent && !_swinging && !held) {
-      final rel = (_preVel -
-              (other is BodyComponent
-                  ? other.body.linearVelocity
-                  : Vector2.zero()))
-          .length;
+      var rel = _preVel.length;
+      if (other is BodyComponent) {
+        rel = (_preVel - other.body.linearVelocity).length;
+      }
       if (rel > 4) {
         onImpactDamage?.call(this, other, rel);
         if (isBreakable) damage(rel * 1.6);
