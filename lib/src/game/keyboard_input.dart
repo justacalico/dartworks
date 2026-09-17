@@ -32,7 +32,6 @@ class KeyboardInputMapper {
   static final _interact = {LogicalKeyboardKey.keyF};
   static final _slowmo = {
     LogicalKeyboardKey.shiftLeft,
-    LogicalKeyboardKey.keyQ,
   };
 
   bool handleKey(KeyEvent event) {
@@ -54,6 +53,7 @@ class KeyboardInputMapper {
         input.pauseEdge = true;
       }
       if (key == LogicalKeyboardKey.keyR) input.interactEdge = true;
+      if (key == LogicalKeyboardKey.keyQ) input.slowmoEdge = true;
     }
 
     input.moveAxis = (_held.any(_right.contains) ? 1.0 : 0.0) -
@@ -72,5 +72,13 @@ class KeyboardInputMapper {
 
   void setFire(bool firing) => input.fire = firing;
 
-  void clear() => _held.clear();
+  void clear() {
+    _held.clear();
+    input.moveAxis = 0;
+    input.jump = false;
+    input.crouch = false;
+    input.grab = false;
+    input.slowmo = false;
+    input.fire = false;
+  }
 }

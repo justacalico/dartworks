@@ -22,7 +22,13 @@ class HudState extends ChangeNotifier {
   bool slowmoActive = false;
 
   /// Set while the player stands at a monomat; cleared when they leave.
-  MonomatZone? openMonomat;
+  MonomatZone? _openMonomat;
+  MonomatZone? get openMonomat => _openMonomat;
+  set openMonomat(MonomatZone? v) {
+    if (v == _openMonomat) return;
+    _openMonomat = v;
+    notifyListeners();
+  }
 
   String? _toast;
   double _toastTtl = 0;

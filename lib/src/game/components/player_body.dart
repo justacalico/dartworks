@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 
@@ -7,9 +8,7 @@ import '../../data/items.dart';
 import '../physics/body_defs.dart';
 import '../systems/input_state.dart';
 import '../systems/inventory.dart';
-import 'enemy_body.dart';
 import 'physics_prop.dart';
-import 'zones.dart';
 
 /// The player's physical body: movement, jumping, grabbing, weapon use.
 /// The game supplies [input] every frame and answers callbacks for
@@ -19,9 +18,9 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
     required Vector2 spawn,
     required this.input,
     this.onFire,
-    this.onMeleeContact,
     this.onSlotChange,
     this.findGrabbable,
+    this.onHolster,
     this.onDeath,
   })  : spawnPos = spawn.clone(),
         super(renderBody: false);
@@ -31,9 +30,12 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
 
   /// Game hooks.
   void Function(Vector2 pos, Vector2 dir, InventorySlot slot)? onFire;
-  void Function(PhysicsProp weapon, Object target)? onMeleeContact;
   void Function(int slot, ItemDef? item)? onSlotChange;
   PhysicsProp? Function(Vector2 from, Vector2 dir)? findGrabbable;
+
+  /// Called when the player grabs a weapon prop; return true if the
+  /// game holstered it (skip the physical grab).
+  bool Function(PhysicsProp prop)? onHolster;
   void Function()? onDeath;
 
   final inventory = Inventory();
@@ -61,14 +63,17 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
   double _fireCooldown = 0;
   double _swingTimer = 0;
   double _regenTimer = 0;
-  double _groundContacts = 0;
   double _hurtFlash = 0;
   int _lastSlot = -1;
   ItemDef? _lastItem;
   bool _wasGrabHeld = false;
   bool _wasFireHeld = false;
 
-  bool get isGrounded => _groundContacts > 0 || _coyote > 0;
+  /// Bodies the feet currently rest on. Pruned for unmounted members
+  /// each tick — destroyed bodies never deliver endContact.
+  final _ground = <Object>{};
+
+  bool get isGrounded => _ground.isNotEmpty || _coyote > 0;
 
   Vector2 get aimDir {
     final v = Vector2(input.aimX, input.aimY);
@@ -151,7 +156,8 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
   }
 
   void _timers(double dt) {
-    _coyote = _groundContacts > 0 ? 0.11 : _coyote - dt;
+    _ground.removeWhere((o) => o is Component && !o.isMounted);
+    _coyote = _ground.isNotEmpty ? 0.11 : _coyote - dt;
     _jumpBuffer -= dt;
     _fireCooldown -= dt;
     if (_swingTimer > 0) {
@@ -180,8 +186,12 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
       if (grabbed != null) {
         dropGrab();
       } else {
-        grabbed = findGrabbable?.call(body.position, aimDir);
-        grabbed?.grab();
+        final target = findGrabbable?.call(body.position, aimDir);
+        if (target != null && (onHolster?.call(target) ?? false)) {
+          // weapon went straight into a holster slot
+        } else {
+          grabbed = target?..grab();
+        }
       }
     }
     _wasGrabHeld = held;
@@ -250,26 +260,18 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
 
   @override
   void beginContact(Object other, Contact contact) {
-    if (other is! DwZone &&
-        other is! EnemyBody &&
-        other is! PlayerBody) {
-      _groundContacts++;
+    if (!contact.isSensorEvent &&
+        (other is GroundSurface || other is PhysicsProp)) {
+      _ground.add(other);
     }
     if (other is PhysicsProp && other.isCollectibleQuest) {
       other.onCollect?.call(other);
-    }
-    if (other is EnemyBody && other.crown != null && grabbed == null) {
-      // brushing against the king can't steal the crown; grab it
     }
   }
 
   @override
   void endContact(Object other, Contact contact) {
-    if (other is! DwZone &&
-        other is! EnemyBody &&
-        other is! PlayerBody) {
-      _groundContacts = math.max(0, _groundContacts - 1);
-    }
+    _ground.remove(other);
   }
 
   @override

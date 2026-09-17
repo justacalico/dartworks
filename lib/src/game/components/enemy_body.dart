@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flame/components.dart';
 import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 
@@ -8,7 +9,6 @@ import '../physics/body_defs.dart';
 import '../systems/enemy_ai.dart';
 import 'physics_prop.dart';
 import 'player_body.dart';
-import 'zones.dart';
 
 /// Physical enemy. Movement and attack decisions come from
 /// [decideIntent]; this class applies them to a body and draws it.
@@ -42,7 +42,8 @@ class EnemyBody extends BodyComponent with ContactCallbacks {
   double _hurtFlash = 0;
   double _deadTimer = -1;
   bool dead = false;
-  double _groundedContacts = 0;
+  final _grounded = <Object>{};
+  var _knock = Vector2.zero();
   double _cooldown = 0;
   final _rng = math.Random();
 
@@ -59,7 +60,7 @@ class EnemyBody extends BodyComponent with ContactCallbacks {
     if (from != null) {
       final dir = body.position - from;
       if (dir.length2 > 0) {
-        body.applyLinearImpulse(dir.normalized() * body.mass * 1.5);
+        _knock += dir.normalized() * 5;
       }
     }
     if (hp <= 0) {
@@ -110,7 +111,8 @@ class EnemyBody extends BodyComponent with ContactCallbacks {
                 DwBits.enemy |
                 DwBits.bullet |
                 DwBits.prop |
-                DwBits.heldItem,
+                DwBits.heldItem |
+                DwBits.sensor,
         userData: this,
       ),
     );
@@ -148,19 +150,21 @@ class EnemyBody extends BodyComponent with ContactCallbacks {
       rng: _rng.nextDouble(),
     );
 
+    _grounded.removeWhere((o) => o is Component && !o.isMounted);
+    _knock.x -= _knock.x * 9 * dt;
     if (!isTurret) {
       body.linearVelocity = Vector2(
-        intent.moveX * def.speed,
+        intent.moveX * def.speed + _knock.x,
         isFlyer ? intent.moveY * def.speed : body.linearVelocity.y,
       );
-      if (intent.jump && _groundedContacts > 0) {
+      if (intent.jump && _grounded.isNotEmpty) {
         body.applyLinearImpulse(
             Vector2(intent.moveX * 2, -def.speed * 1.8) * body.mass);
         _cooldown = def.attackCooldown;
       }
       // Flyers hold a hover altitude above the player.
       if (isFlyer) {
-        final targetY = p.body.position.y - 2.2;
+        final targetY = p.body.position.y - 3.4;
         body.linearVelocity = Vector2(
           body.linearVelocity.x,
           ((targetY - myPos.y) * 2.2).clamp(-def.speed, def.speed),
@@ -186,12 +190,11 @@ class EnemyBody extends BodyComponent with ContactCallbacks {
   @override
   void beginContact(Object other, Contact contact) {
     super.beginContact(other, contact);
-    if (dead) return;
-    if (other is! DwZone &&
-        other is! PlayerBody &&
-        other is! EnemyBody) {
-      _groundedContacts++;
+    if (!contact.isSensorEvent &&
+        (other is GroundSurface || other is PhysicsProp)) {
+      _grounded.add(other);
     }
+    if (dead) return;
     if (other is PlayerBody && !crownTaken) {
       final intent = decideIntent(
         def,
@@ -209,11 +212,7 @@ class EnemyBody extends BodyComponent with ContactCallbacks {
   @override
   void endContact(Object other, Contact contact) {
     super.endContact(other, contact);
-    if (other is! DwZone &&
-        other is! PlayerBody &&
-        other is! EnemyBody) {
-      _groundedContacts = math.max(0, _groundedContacts - 1);
-    }
+    _grounded.remove(other);
   }
 
   @override

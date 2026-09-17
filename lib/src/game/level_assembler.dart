@@ -37,6 +37,7 @@ class AssembledLevel {
   final doors = <DoorBody>[];
   final lockedDoors = <DoorBody>[];
   final targets = <RangeTarget>[];
+  final zones = <DwZone>[];
   int notesTotal = 0;
 }
 
@@ -109,7 +110,10 @@ Future<AssembledLevel> assembleLevel({
       spawn: feetAt(map.playerSpawn, 0.78), input: input);
   await world.add(player);
   final result = AssembledLevel(player: player, map: map, palette: palette)
-    ..notesTotal = levelNotes.length;
+    ..notesTotal =
+        levelNotes.length < map.clipboards.length
+            ? levelNotes.length
+            : map.clipboards.length;
 
   for (final run in groupDoors(map.doors)) {
     final door = DoorBody(
@@ -131,37 +135,41 @@ Future<AssembledLevel> assembleLevel({
   }
 
   // Static pickups and zones.
+  Future<void> zone(DwZone z) async {
+    result.zones.add(z);
+    await world.add(z);
+  }
+
   for (final cell in map.exits) {
-    await world.add(ExitZone(center: cellCenter(cell)));
+    await zone(ExitZone(center: cellCenter(cell)));
   }
   for (final cell in map.hazards) {
-    await world
-        .add(HazardZone(center: cellCenter(cell) + Vector2(0, 0.5)));
+    await zone(HazardZone(center: cellCenter(cell) + Vector2(0, 0.5)));
   }
   for (final cell in map.gravityCells) {
-    await world.add(GravityZone(center: cellCenter(cell)));
+    await zone(GravityZone(center: cellCenter(cell)));
   }
   for (final cell in map.keycards) {
-    await world.add(PickupZone(center: cellCenter(cell), kind: 'keycard'));
+    await zone(PickupZone(center: cellCenter(cell), kind: 'keycard'));
   }
   for (final cell in map.slowmos) {
-    await world.add(PickupZone(center: cellCenter(cell), kind: 'slowmo'));
+    await zone(PickupZone(center: cellCenter(cell), kind: 'slowmo'));
   }
   for (final cell in map.gachapons) {
-    await world.add(PickupZone(center: cellCenter(cell), kind: 'gachapon'));
+    await zone(PickupZone(center: cellCenter(cell), kind: 'gachapon'));
   }
   for (final cell in map.archiveBins) {
-    await world.add(BinZone(center: cellCenter(cell), isReclaim: false));
+    await zone(BinZone(center: cellCenter(cell), isReclaim: false));
   }
   for (final cell in map.reclaimBins) {
-    await world.add(BinZone(center: cellCenter(cell), isReclaim: true));
+    await zone(BinZone(center: cellCenter(cell), isReclaim: true));
   }
   for (final cell in map.batterySockets) {
-    await world.add(
+    await zone(
         SocketZone(center: cellCenter(cell), acceptsItem: 'battery'));
   }
   for (final cell in map.coreSockets) {
-    await world.add(
+    await zone(
         SocketZone(center: cellCenter(cell), acceptsItem: 'energy_core'));
   }
   for (final cell in map.targets) {
@@ -196,8 +204,8 @@ Future<AssembledLevel> assembleLevel({
       result.props.add(p);
       await world.add(p);
     } else if (raw == 'flashlight') {
-      await world
-          .add(PickupZone(center: cellCenter(spawn.cell), kind: 'flashlight'));
+      await zone(
+          PickupZone(center: cellCenter(spawn.cell), kind: 'flashlight'));
     } else {
       final item = kItems[raw];
       if (item == null) continue;

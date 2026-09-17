@@ -7,7 +7,7 @@ import '../physics/body_defs.dart';
 
 /// Kinematic platform oscillating on one axis. `q` rides vertically,
 /// `Q` slides horizontally.
-class MovingPlatform extends BodyComponent {
+class MovingPlatform extends BodyComponent with GroundSurface {
   MovingPlatform({
     required this.center,
     required this.vertical,

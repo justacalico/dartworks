@@ -5,6 +5,7 @@ import '../../data/items.dart';
 import '../physics/body_defs.dart';
 import '../render/item_painter.dart';
 import 'enemy_body.dart';
+import 'player_body.dart';
 
 /// A physical item: props, weapons, quest objects and pickups all share
 /// this body. Grab/held state is driven by the player; breakables die
@@ -120,10 +121,14 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
   /// Held items stop colliding with the player so the hand doesn't push
   /// the body around.
   void _retarget(int category) {
+    final heldMask = Filter.allCategories & ~DwBits.player;
     for (final s in body.shapes) {
-      final f = s.filter;
       s.filter = Filter(
-          categoryBits: category, maskBits: f.maskBits);
+        categoryBits: category,
+        maskBits: category == DwBits.heldItem
+            ? heldMask
+            : Filter.allCategories,
+      );
     }
   }
 
@@ -160,14 +165,20 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
     if (swinging && other is EnemyBody && !other.dead) {
       other.damage(item.damage, from: body.position);
     }
-    final rel =
-        (body.linearVelocity - (other is BodyComponent ? other.body.linearVelocity : Vector2.zero()))
-            .length;
-    if (rel > 4) {
-      onImpactDamage?.call(this, other, rel);
-      if (isBreakable) damage(rel * 1.6);
+    if (!contact.isSensorEvent && !swinging && !held) {
+      final rel = (body.linearVelocity -
+              (other is BodyComponent
+                  ? other.body.linearVelocity
+                  : Vector2.zero()))
+          .length;
+      if (rel > 4) {
+        onImpactDamage?.call(this, other, rel);
+        if (isBreakable) damage(rel * 1.6);
+      }
     }
-    if (isCollectibleQuest) onCollect?.call(this);
+    if (isCollectibleQuest && other is PlayerBody) {
+      onCollect?.call(this);
+    }
   }
 
   @override

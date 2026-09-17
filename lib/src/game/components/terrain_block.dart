@@ -8,7 +8,7 @@ import '../tile_map.dart';
 /// One static body holding every merged solid run (and separately the
 /// thin platforms and invisible walls) for a level. Renders each rect
 /// with a lit top edge in the level palette.
-class TerrainBlock extends BodyComponent {
+class TerrainBlock extends BodyComponent with GroundSurface {
   TerrainBlock({
     required this.rects,
     required this.palette,

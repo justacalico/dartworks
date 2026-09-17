@@ -6,7 +6,7 @@ import 'player_body.dart';
 
 /// Sliding slab covering one or more vertical cells. Auto doors sense
 /// the player; locked doors wait for [unlock] from the game.
-class DoorBody extends BodyComponent {
+class DoorBody extends BodyComponent with GroundSurface {
   DoorBody({
     required this.x,
     required this.top,
@@ -85,7 +85,7 @@ class DoorBody extends BodyComponent {
 }
 
 /// Secret wall that dissolves after the player pushes on it.
-class HiddenWall extends BodyComponent with ContactCallbacks {
+class HiddenWall extends BodyComponent with ContactCallbacks, GroundSurface {
   HiddenWall({required this.x, required this.y});
 
   final double x;

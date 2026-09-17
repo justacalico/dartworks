@@ -1,5 +1,9 @@
 import 'package:flame_forge2d/flame_forge2d.dart';
 
+/// Marks components whose surface characters can stand on. Used for
+/// grounded checks without importing concrete component types.
+mixin GroundSurface {}
+
 /// Collision categories.
 class DwBits {
   static const int terrain = 0x0001;

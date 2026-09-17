@@ -5,7 +5,7 @@ import '../physics/body_defs.dart';
 import 'enemy_body.dart';
 import 'physics_prop.dart';
 import 'player_body.dart';
-import 'target.dart';
+import 'zones.dart';
 
 /// Fast projectile. Player shots hurt enemies, break boneboxes and
 /// knock targets; enemy bolts hurt the player.
@@ -76,7 +76,8 @@ class Bullet extends BodyComponent with ContactCallbacks {
     if (_hit) return;
     if (friendly && other is PlayerBody) return;
     if (!friendly && other is EnemyBody) return;
-    if (other is RangeTarget) return; // passes through; target self-detects
+    // Zones are sensor volumes; targets detect hits on their own side.
+    if (other is DwZone) return;
     _hit = true;
     if (friendly) {
       switch (other) {

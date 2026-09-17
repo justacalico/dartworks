@@ -50,6 +50,7 @@ class DartworksGame extends Forge2DGame {
   double _elapsed = 0;
   double _timeScale = 1;
   bool _ended = false;
+  bool _slowmoToggled = false;
   int _notesFound = 0;
   final _waveEnemies = <EnemyBody>{};
   final _props = <PhysicsProp>{};
@@ -104,16 +105,17 @@ class DartworksGame extends Forge2DGame {
     p.onFire = _playerFire;
     p.onSlotChange = _slotChanged;
     p.findGrabbable = _findGrabbable;
+    p.onHolster = _tryHolster;
     p.onDeath = _playerDied;
 
-    for (final zone in world.children.whereType<DwZone>()) {
+    for (final zone in a.zones) {
       if (zone is ExitZone) {
         zone.tryExit = _tryExit;
       } else if (zone is BinZone) {
         zone.onPropIn = (prop) =>
             zone.isReclaim ? _reclaim(prop) : _archive(prop);
       } else if (zone is SocketZone) {
-        zone.onPowered = () => _socketPowered(zone.acceptsItem);
+        zone.onPowered = (prop) => _socketPowered(zone.acceptsItem, prop);
       } else if (zone is PickupZone) {
         zone.onPickup = _pickup;
       } else if (zone is MonomatZone) {
@@ -152,6 +154,7 @@ class DartworksGame extends Forge2DGame {
       final prop = PhysicsProp(
         item: kItems['crate']!,
         spawn: who.body.position + dir * 1.2 + Vector2(0, -0.5),
+        hp: 12,
       )
         ..initialVelocity = dir * who.def.boltSpeed + Vector2(0, -3);
       _props.add(prop);
@@ -159,14 +162,16 @@ class DartworksGame extends Forge2DGame {
     };
     e.onDeath = (who) {
       _enemies.remove(who);
-      if (_waveEnemies.remove(who)) {
+      final wasWave = _waveEnemies.remove(who);
+      if (wasWave) {
         waves.enemyDown();
         if (waves.alive == 0) goal.waveCleared();
       }
-      if (goal.goal.type == LevelGoalType.clearEnemies) {
+      if (goal.goal.type == LevelGoalType.clearEnemies && !wasWave) {
         goal.enemyKilled();
       }
-      if (goal.goal.type == LevelGoalType.bossFight) {
+      if (goal.goal.type == LevelGoalType.bossFight &&
+          who.def.behavior == EnemyBehavior.boss) {
         goal.bossDefeated();
       }
       _toast('${who.def.name} DOWN');
@@ -256,8 +261,12 @@ class DartworksGame extends Forge2DGame {
   void _collectQuest(PhysicsProp prop) {
     if (prop.isRemoving) return;
     if (prop.noteId != null) {
-      final note = kNotes.firstWhere((n) => n.id == prop.noteId,
-          orElse: () => kNotes.first);
+      final note = kNotes.where((n) => n.id == prop.noteId).firstOrNull;
+      if (note == null) {
+        _props.remove(prop);
+        prop.removeFromParent();
+        return;
+      }
       _notesFound++;
       store.addNote(note.id);
       events.onNote?.call(note);
@@ -326,7 +335,13 @@ class DartworksGame extends Forge2DGame {
     _toast('${prop.item.name} RECLAIMED');
   }
 
-  void _socketPowered(String itemId) {
+  void _socketPowered(String itemId, PhysicsProp prop) {
+    // The zone flagged itself; the game owns the prop cleanup so no
+    // dangling references point at a destroyed body.
+    _props.remove(prop);
+    if (player.grabbed == prop) player.grabbed = null;
+    if (player.equippedProp == prop) player.equippedProp = null;
+    prop.removeFromParent();
     if (itemId == 'battery') {
       for (final d in _lvl!.lockedDoors) {
         d.unlock();
@@ -404,9 +419,10 @@ class DartworksGame extends Forge2DGame {
     inv.looseAmmo -= offer.price;
     final item = kItems[bought];
     if (item == null) return;
-    if (item.isHoldable && inv.active == null) {
-      inv.store(item);
-      _slotChanged(inv.activeSlot, item);
+    final slotIndex = item.isHoldable ? inv.store(item) : null;
+    if (slotIndex != null) {
+      inv.select(slotIndex);
+      _slotChanged(slotIndex, item);
     } else {
       _spawnDrop(bought, m.body.position + Vector2(0, 1.2));
     }
@@ -414,12 +430,33 @@ class DartworksGame extends Forge2DGame {
     hud.refresh();
   }
 
-  /// Interact pressed — also grabs/drops by context.
+  /// Interact pressed — throws a held prop, or drops the equipped
+  /// weapon back into the world as a loose prop.
   void interact() {
     final p = player;
     if (p.grabbed != null) {
       p.throwGrabbed();
+      return;
     }
+    final dropped = p.inventory.dropActive();
+    if (dropped == null) return;
+    final prop = PhysicsProp(item: dropped, spawn: p.handPos);
+    _wireProp(prop);
+    _add(prop);
+    _toast('${dropped.name} DROPPED');
+  }
+
+  /// Grab on a weapon prop holsters it instead of a physical grab.
+  bool _tryHolster(PhysicsProp prop) {
+    if (!prop.isWeapon) return false;
+    final inv = player.inventory;
+    final index = inv.store(prop.item);
+    if (index == null) return false;
+    inv.select(index);
+    _props.remove(prop);
+    prop.removeFromParent();
+    _toast('${prop.item.name} HOLSTERED');
+    return true;
   }
 
   void _toast(String msg) {
@@ -446,7 +483,9 @@ class DartworksGame extends Forge2DGame {
 
     // Slow-time: physics and components run on the scaled clock.
     final p = player;
-    final wantSlow = input.slowmo && p.slowCharge > 0;
+    if (input.slowmoEdge) _slowmoToggled = !_slowmoToggled;
+    final wantSlow =
+        (input.slowmo || _slowmoToggled) && p.slowCharge > 0;
     _timeScale = wantSlow ? 0.35 : 1.0;
     final sdt = dt * _timeScale;
     _elapsed += sdt;
@@ -462,7 +501,9 @@ class DartworksGame extends Forge2DGame {
     for (final d in a.lockedDoors) {
       if (!d.unlocked &&
           p.inventory.keycards > 0 &&
-          (p.body.position.x - d.x).abs() < 2.2) {
+          (p.body.position.x - d.x).abs() < 2.6 &&
+          (p.body.position.y - (d.top + d.height / 2)).abs() <
+              d.height.toDouble()) {
         p.inventory.keycards--;
         d.unlock();
         _toast('KEYCARD ACCEPTED');
@@ -482,7 +523,7 @@ class DartworksGame extends Forge2DGame {
             _toast('THE CROWN IS YOURS — KING FORD STANDS DOWN');
           }
         } else {
-          crown.grabbed = true;
+          if (!crown.grabbed && crown.isMounted) crown.grab();
           crown.anchor = e.body.position + Vector2(0, -e.def.sizeY * 0.62);
         }
       }
@@ -490,20 +531,32 @@ class DartworksGame extends Forge2DGame {
 
     // Wave spawner.
     final spawn = waves.update(dt);
-    if (spawn != null && a.map.waveSpawns.isNotEmpty) {
-      var i = 0;
-      for (final id in spawn) {
-        final cell = a.map.waveSpawns[i % a.map.waveSpawns.length];
-        final def = kEnemies[id];
-        if (def == null) continue;
-        final e = EnemyBody(def: def, spawn: feetAt(cell, def.sizeY / 2))
-          ..player = p;
-        _wireEnemy(e);
-        _waveEnemies.add(e);
-        _add(e);
-        i++;
+    if (spawn != null) {
+      if (a.map.waveSpawns.isEmpty) {
+        // No spawn points: drain the wave so the goal can still clear.
+        for (var i = 0; i < spawn.length; i++) {
+          waves.enemyDown();
+        }
+        if (waves.alive == 0) goal.waveCleared();
+      } else {
+        var i = 0;
+        for (final id in spawn) {
+          final cell = a.map.waveSpawns[i % a.map.waveSpawns.length];
+          final def = kEnemies[id];
+          if (def == null) {
+            waves.enemyDown();
+            continue;
+          }
+          final e = EnemyBody(
+              def: def, spawn: feetAt(cell, def.sizeY / 2))
+            ..player = p;
+          _wireEnemy(e);
+          _waveEnemies.add(e);
+          _add(e);
+          i++;
+        }
+        _toast('WAVE ${waves.currentWave} INBOUND');
       }
-      _toast('WAVE ${waves.currentWave} INBOUND');
     }
 
     // Prune destroyed props.
@@ -533,6 +586,12 @@ class DartworksGame extends Forge2DGame {
     input.clearEdges();
   }
 
+  @override
+  void onRemove() {
+    world.physicsWorld.destroy();
+    super.onRemove();
+  }
+
   void _syncHud() {
     final p = player;
     hud
@@ -547,5 +606,6 @@ class DartworksGame extends Forge2DGame {
       ..slotItem = p.inventory.active?.item
       ..slotAmmo = p.inventory.active?.ammo ?? 0
       ..setObjective(goal.describe(), done: goal.isComplete);
+    hud.refresh();
   }
 }

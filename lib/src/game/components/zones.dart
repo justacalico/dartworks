@@ -156,6 +156,8 @@ class GravityZone extends DwZone {
 
   @override
   void update(double dt) {
+    _inside.removeWhere(
+        (c, _) => !c.isMounted || !c.body.isValid);
     for (final c in _inside.keys) {
       c.body.applyForce(Vector2(0, -1.5) * c.body.mass);
     }
@@ -284,16 +286,15 @@ class SocketZone extends DwZone {
   }) : super(w: 1.6, h: 1.6, reactsToPlayer: false, reactsToProps: true);
 
   final String acceptsItem;
-  void Function()? onPowered;
+  void Function(PhysicsProp prop)? onPowered;
   bool powered = false;
 
   @override
   void onEnter(Object other) {
-    if (powered || other is! PhysicsProp) return;
+    if (powered || other is! PhysicsProp || other.held) return;
     if (other.item.id == acceptsItem) {
       powered = true;
-      other.removeFromParent();
-      onPowered?.call();
+      onPowered?.call(other);
     }
   }
 

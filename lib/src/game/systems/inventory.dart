@@ -17,17 +17,17 @@ class Inventory {
 
   InventorySlot? get active => slots[activeSlot];
 
-  /// Stores an item in the first free slot, or the active one.
-  /// Returns false if the item cannot be held.
-  bool store(ItemDef item) {
-    if (!item.isHoldable) return false;
+  /// Stores an item in the first free slot, or replaces the active
+  /// one. Returns the slot index used, or null if it cannot be held.
+  int? store(ItemDef item) {
+    if (!item.isHoldable) return null;
     final index = slots[0] == null
         ? 0
         : slots[1] == null
             ? 1
             : activeSlot;
     slots[index] = InventorySlot(item);
-    return true;
+    return index;
   }
 
   void select(int index) {
