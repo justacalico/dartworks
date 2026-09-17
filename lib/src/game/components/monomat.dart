@@ -1,9 +1,6 @@
-import 'package:flame_forge2d/flame_forge2d.dart';
 import 'package:flutter/material.dart';
 
-import '../../data/items.dart';
 import '../systems/monomat_economy.dart';
-import 'physics_prop.dart';
 import 'player_body.dart';
 import 'zones.dart';
 
@@ -70,8 +67,3 @@ class MonomatZone extends DwZone {
     );
   }
 }
-
-/// Thrown prop from a zombish thrower — just a physics prop spawned
-/// with velocity; defined here so the game file stays lean.
-PhysicsProp makeThrownProp(ItemDef item, Vector2 at) =>
-    PhysicsProp(item: item, spawn: at);

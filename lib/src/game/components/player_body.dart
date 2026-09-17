@@ -272,7 +272,7 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
 
   @override
   void endContact(Object other, Contact contact) {
-    _ground.remove(other);
+    if (!contact.isSensorEvent) _ground.remove(other);
   }
 
   @override

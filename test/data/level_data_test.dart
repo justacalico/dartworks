@@ -47,8 +47,8 @@ void main() {
     test('every tile char is known', () {
       for (final level in kLevelData.values) {
         final known =
-            _terrainTiles + _interactTiles + _enemyTiles + '123456789'
-                'wvuial' + ' ';
+            '$_terrainTiles$_interactTiles${_enemyTiles}123456789'
+                'wvuial ';
         for (var y = 0; y < level.height; y++) {
           for (final ch in level.layout[y].split('')) {
             final ok = known.contains(ch) ||

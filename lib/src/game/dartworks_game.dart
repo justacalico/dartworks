@@ -550,13 +550,9 @@ class DartworksGame extends Forge2DGame {
         var i = 0;
         for (final id in spawn) {
           final cell = a.map.waveSpawns[i % a.map.waveSpawns.length];
-          final def = kEnemies[id];
-          if (def == null) {
-            waves.enemyDown();
-            continue;
-          }
           final e = EnemyBody(
-              def: def, spawn: feetAt(cell, def.sizeY / 2))
+              def: kEnemies[id]!,
+              spawn: feetAt(cell, kEnemies[id]!.sizeY / 2))
             ..player = p;
           _wireEnemy(e);
           _waveEnemies.add(e);

@@ -61,6 +61,11 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
   bool _swinging = false;
   bool get swinging => _swinging;
 
+  /// Velocity snapshot from the previous tick. Contact events arrive
+  /// post-solve, when the solver has already absorbed the impact, so
+  /// [beginContact] reads this instead of the live velocity.
+  final _preVel = Vector2.zero();
+
   /// Begin a melee swing: hits anything already touching plus new
   /// contacts until [stopSwing].
   void startSwing() {
@@ -166,6 +171,7 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
   void update(double dt) {
     super.update(dt);
     if (!isLoaded) return;
+    _preVel.setFrom(body.linearVelocity);
     if (!((grabbed || held) && anchor != null)) return;
     final to = anchor! - body.position;
     if (held) {
@@ -195,7 +201,7 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
       }
     }
     if (!contact.isSensorEvent && !_swinging && !held) {
-      final rel = (body.linearVelocity -
+      final rel = (_preVel -
               (other is BodyComponent
                   ? other.body.linearVelocity
                   : Vector2.zero()))

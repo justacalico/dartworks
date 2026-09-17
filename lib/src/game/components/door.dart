@@ -110,12 +110,16 @@ class HiddenWall extends BodyComponent with ContactCallbacks, GroundSurface {
 
   @override
   void beginContact(Object other, Contact contact) {
-    if (other is PlayerBody) _pushing = true;
+    if (other is PlayerBody && !contact.isSensorEvent) {
+      _pushing = true;
+    }
   }
 
   @override
   void endContact(Object other, Contact contact) {
-    if (other is PlayerBody) _pushing = false;
+    if (other is PlayerBody && !contact.isSensorEvent) {
+      _pushing = false;
+    }
   }
 
   @override

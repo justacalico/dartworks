@@ -6,6 +6,7 @@ LevelData miniLevel(
   List<String> layout, {
   LevelGoal goal = const LevelGoal(LevelGoalType.reachExit),
   Map<String, String> legend = const {},
+  Map<String, String> boneboxDrops = const {},
   List<MonomatOffer> stock = const [],
   List<WaveSpec> waves = const [],
   double darkness = 0,
@@ -24,6 +25,7 @@ LevelData miniLevel(
       objective: 'test objective',
       goal: goal,
       itemLegend: legend,
+      boneboxDrops: boneboxDrops,
       monomatStock: stock,
       waves: waves,
     );
