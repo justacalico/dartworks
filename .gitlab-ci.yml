@@ -32,7 +32,7 @@ variables:
 
 pages:
   stage: build
-  image: ghcr.io/cirruslabs/flutter:3.44.6
+  image: ghcr.io/cirruslabs/flutter:stable
   variables:
     GIT_DEPTH: "1"
   script:
@@ -47,9 +47,13 @@ pages:
 
 test:
   stage: build
-  image: ghcr.io/cirruslabs/flutter:3.44.6
+  image: ghcr.io/cirruslabs/flutter:stable
   variables:
     GIT_DEPTH: "1"
+  before_script:
+    # forge2d ships a native-assets build hook that compiles Box2D, so the
+    # test job needs a C toolchain the flutter image does not include.
+    - apt-get update -qq && apt-get install -y -qq clang
   script:
     - flutter pub get
     - flutter analyze
