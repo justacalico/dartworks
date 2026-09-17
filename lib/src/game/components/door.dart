@@ -42,6 +42,7 @@ class DoorBody extends BodyComponent with GroundSurface {
 
   @override
   void update(double dt) {
+    if (!isLoaded) return;
     final wantsOpen = unlocked ||
         (!locked &&
             player != null &&
@@ -119,6 +120,7 @@ class HiddenWall extends BodyComponent with ContactCallbacks, GroundSurface {
 
   @override
   void update(double dt) {
+    if (!isLoaded) return;
     if (_pushing && !gone) {
       _pushTime += dt;
       if (_pushTime > 1.1) {

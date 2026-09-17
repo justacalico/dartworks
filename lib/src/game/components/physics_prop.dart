@@ -142,6 +142,7 @@ class PhysicsProp extends BodyComponent with ContactCallbacks {
   @override
   void update(double dt) {
     super.update(dt);
+    if (!isLoaded) return;
     if (!((grabbed || held) && anchor != null)) return;
     final to = anchor! - body.position;
     final force = to * (held ? 90 : 55) * body.mass -

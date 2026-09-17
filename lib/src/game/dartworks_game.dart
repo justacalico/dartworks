@@ -483,6 +483,10 @@ class DartworksGame extends Forge2DGame {
 
     // Slow-time: physics and components run on the scaled clock.
     final p = player;
+    if (!p.isLoaded) {
+      super.update(dt);
+      return;
+    }
     if (input.slowmoEdge) _slowmoToggled = !_slowmoToggled;
     final wantSlow =
         (input.slowmo || _slowmoToggled) && p.slowCharge > 0;

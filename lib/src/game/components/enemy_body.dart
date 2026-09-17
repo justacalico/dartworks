@@ -129,6 +129,7 @@ class EnemyBody extends BodyComponent with ContactCallbacks {
   @override
   void update(double dt) {
     super.update(dt);
+    if (!isLoaded) return;
     if (dead) {
       _deadTimer += dt;
       if (_deadTimer > 2.5) removeFromParent();

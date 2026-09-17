@@ -9,27 +9,15 @@ import 'package:flame_test/flame_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/fake_store.dart';
+import '../helpers/mini_level.dart';
 
 LevelData _mini(List<String> layout,
         {LevelGoal goal = const LevelGoal(LevelGoalType.reachExit),
         Map<String, String> legend = const {},
         List<MonomatOffer> stock = const [],
         List<WaveSpec> waves = const []}) =>
-    LevelData(
-      id: 'test_mini',
-      layout: layout,
-      palette: const LevelPalette(
-          bgTop: 0xFF000000,
-          bgBottom: 0xFF111111,
-          block: 0xFF222222,
-          blockEdge: 0xFF444444,
-          accent: 0xFF4DE8FF),
-      objective: 'test objective',
-      goal: goal,
-      itemLegend: legend,
-      monomatStock: stock,
-      waves: waves,
-    );
+    miniLevel(layout,
+        goal: goal, legend: legend, stock: stock, waves: waves);
 
 /// Step the game N frames, yielding each tick so deferred
 /// component loads finish (world.add is FutureOr).

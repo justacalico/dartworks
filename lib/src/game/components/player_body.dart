@@ -141,6 +141,7 @@ class PlayerBody extends BodyComponent with ContactCallbacks {
   @override
   void update(double dt) {
     super.update(dt);
+    if (!isLoaded) return;
     _hurtFlash = (_hurtFlash - dt).clamp(0.0, 1.0);
     if (isDead) return;
 

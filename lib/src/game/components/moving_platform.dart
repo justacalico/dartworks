@@ -36,6 +36,7 @@ class MovingPlatform extends BodyComponent with GroundSurface {
 
   @override
   void update(double dt) {
+    if (!isLoaded) return;
     _t += dt;
     final phase = math.sin(_t * 2 * math.pi / period);
     final offset = phase * range;
