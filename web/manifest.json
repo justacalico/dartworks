@@ -1,12 +1,12 @@
 {
-    "name": "dartworks",
-    "short_name": "dartworks",
+    "name": "Dartworks",
+    "short_name": "Dartworks",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#07060B",
+    "theme_color": "#07060B",
+    "description": "2D physics demake of BONEWORKS in Flutter. Fan project, not for production.",
+    "orientation": "landscape-primary",
     "prefer_related_applications": false,
     "icons": [
         {
